@@ -1,0 +1,53 @@
+name: Apply analysis exports and simplify nav
+
+on:
+  push:
+    paths:
+      - 'scripts/apply-analysis-export.py'
+      - '.github/workflows/apply-analysis-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply update
+        run: python scripts/apply-analysis-export.py
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script>(.*?)</script>',html,re.S)
+          assert scripts, 'No inline script found'
+          Path('/tmp/app.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+      - name: Check requested changes
+        run: |
+          ! grep -q 'data-view="quiz"><span class="ico">🧠</span>一問一答' index.html
+          grep -q 'grid-template-columns:repeat(4,1fr)' index.html
+          grep -q 'exportQuizAnalysis' index.html
+          grep -q 'exportSortAnalysis' index.html
+          grep -q 'exportShakuAnalysis' index.html
+          grep -q 'takken-chatgpt-analysis-quiz-v1' index.html
+          grep -q 'takken-chatgpt-analysis-3537-v1' index.html
+          grep -q 'takken-chatgpt-analysis-shakuchi-shakka-v1' index.html
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add ChatGPT analysis exports and remove quiz tab"
+          git push origin HEAD:main
