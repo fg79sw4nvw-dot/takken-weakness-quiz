@@ -1,0 +1,32 @@
+name: Apply 35-37 drill improvements
+
+on:
+  push:
+    paths:
+      - 'scripts/apply_3537_update.py'
+      - '.github/workflows/apply-ui-update.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply update
+        run: python scripts/apply_3537_update.py
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Improve 35/37 drill UI, stats and question balance"
+          git push origin HEAD:main
