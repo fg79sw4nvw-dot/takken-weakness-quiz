@@ -1,0 +1,35 @@
+name: Validate index.html
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - '.github/workflows/validate-index.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, re.S)
+          if not scripts:
+              raise SystemExit('No inline script found')
+          Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
+          PY
+      - name: Check JavaScript syntax
+        run: node --check /tmp/app.js
+      - name: Check expected 35/37 update markers
+        run: |
+          grep -q "3537-0052" index.html
+          grep -q "sortPerformanceStats" index.html
+          grep -q "nth-child(-n+2)" index.html
