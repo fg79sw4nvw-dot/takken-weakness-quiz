@@ -244,4 +244,5 @@ function exportShakuAnalysis(){
 }
 function exportQuestions(){downloadJSON({format:'takken-question-bank-v1',exportedAt:new Date().toISOString(),questions:state.questions},`takken-questions-${today()}.json`)}function exportBackup(){downloadJSON({...state,format:'takken-full-backup-v2',exportedAt:new Date().toISOString()},`takken-backup-${today()}.json`)}function resetData(){if(confirm('学習履歴とミス理由だけをリセットしますか？ 問題バンクは残ります。')){state.answers=[];state.streak=0;state.lastStudy=null;state.todayDone={date:'',count:0};state.mistakeReasons={};save();renderHome();renderStats()}}reconcileMastery();document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));renderHome();
 </script>
+<script src="/understanding-selection.js?v=1"></script>
 </body></html>
